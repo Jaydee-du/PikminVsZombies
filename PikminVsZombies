@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>PIKMIN VS ZOMBIES</title>
+<style>
+  :root{
+    --bg:#000000;
+    --wall:#a6431f;
+    --wall-glow:#e0703a;
+    --pellet:#ffd877;
+    --pac:#ffe600;
+    --text:#ffd877;
+    --red:#ff0000;
+    --pink:#ffb8ff;
+    --cyan:#00ffff;
+    --orange:#ffb851;
+    --pikmin-body:#e6402c;
+    --pikmin-body-dark:#b82a1c;
+    --pikmin-belly:#f2a08f;
+    --pikmin-leaf:#4caf3c;
+    --pikmin-leaf-dark:#2e7d28;
+    --pikmin-stem:#6b4a2a;
+    --zombie-skin:#7c9b4a;
+    --zombie-skin-dark:#52682f;
+    --zombie-skin-light:#9bb86a;
+    --zombie-tatter:#3f4d24;
+    --zombie-mouth:#2a1810;
+    --flower-center:#8a5a1f;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    min-height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Press Start 2P', 'Courier New', monospace;
+    color:var(--text);
+    overflow-x:hidden;
+    overflow-y:auto;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:pan-y;
+  }
+  @font-face{
+    font-family:'Press Start 2P';
+    src:local('Press Start 2P');
+  }
+  #wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    padding:16px;
+    width:100%;
+    max-width:600px;
+    margin:0 auto;
+  }
+  #hud{
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    font-size:14px;
+    letter-spacing:1px;
+    text-shadow:0 0 6px rgba(255,216,119,.6);
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  #hud .label{font-size:10px; opacity:.7; display:block; margin-bottom:4px;}
+  #stage{
+    position:relative;
+    width:100%;
+    max-width:560px;
+    aspect-ratio: 28 / 30;
+  }
+  canvas{
+    background:#000;
+    image-rendering:pixelated;
+    box-shadow:0 0 0 2px var(--wall), 0 0 24px 4px rgba(224,112,58,.45);
+    border-radius:4px;
+    width:100%;
+    height:100%;
+    display:block;
+    touch-action:none;
+  }
+  #devCredit{
+    font-size:10px;
+    letter-spacing:2px;
+    color:var(--text);
+    opacity:.65;
+    text-align:center;
+    margin:0;
+    font-family:'Press Start 2P', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Courier New', monospace;
+  }
+  #title{
+    font-size:22px;
+    letter-spacing:4px;
+    color:var(--pac);
+    text-shadow:0 0 10px rgba(255,230,0,.7), 0 0 2px #fff;
+    margin:0;
+    text-align:center;
+  }
+  #footer{
+    font-size:9px;
+    opacity:.6;
+    text-align:center;
+    line-height:1.6;
+  }
+  #overlay{
+    position:absolute;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:14px;
+    background:rgba(0,0,0,.78);
+    text-align:center;
+    border-radius:4px;
+  }
+  #overlay.show{display:flex;}
+  #overlay h2{
+    font-size:20px;
+    margin:0;
+    color:var(--pac);
+    text-shadow:0 0 10px rgba(255,230,0,.7);
+  }
+  #overlay p{
+    font-size:11px;
+    margin:0;
+    line-height:1.8;
+  }
+  button#startBtn{
+    font-family:inherit;
+    background:transparent;
+    border:2px solid var(--pac);
+    color:var(--pac);
+    padding:8px 18px;
+    font-size:11px;
+    letter-spacing:2px;
+    cursor:pointer;
+    border-radius:2px;
+    transition:background .15s, color .15s;
+  }
+  button#startBtn:hover{
+    background:var(--pac);
+    color:#000;
+  }
+  .lives-pac{
+    display:inline-block;
+    width:12px;
+    height:12px;
+    background:var(--pac);
+    border-radius:50%;
+    margin-left:4px;
+    clip-path:polygon(100% 50%, 50% 50%, 100% 20%);
+    transform:rotate(0deg);
+  }
+  #muteBtn{
+    font-family:inherit;
+    background:transparent;
+    border:1px solid var(--text);
+    color:var(--text);
+    font-size:13px;
+    line-height:1;
+    padding:3px 7px;
+    cursor:pointer;
+    border-radius:2px;
+    opacity:.8;
+  }
+  #muteBtn:hover{ opacity:1; border-color:var(--pac); color:var(--pac); }
+  #muteBtn.is-muted{ opacity:.4; }
+
+  /* ---------- Touch controls ---------- */
+  #touchpad{
+    display:none;
+    width:100%;
+    max-width:300px;
+    margin-top:4px;
+    user-select:none;
+    -webkit-user-select:none;
+    grid-template-columns: 64px 64px 64px;
+    grid-template-rows: 64px 64px 64px;
+    justify-content:center;
+    gap:6px;
+  }
+  .touch-active #touchpad{ display:grid; }
+  .tbtn{
+    background:rgba(33,33,33,.55);
+    border:1px solid var(--wall-glow);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--text);
+    font-size:20px;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:none;
+  }
+  .tbtn:active, .tbtn.is-pressed{
+    background:rgba(224,112,58,.5);
+    border-color:var(--pac);
+  }
+  #tbtn-up{ grid-column:2; grid-row:1; }
+  #tbtn-left{ grid-column:1; grid-row:2; }
+  #tbtn-center{ grid-column:2; grid-row:2; font-size:13px; opacity:.7; }
+  #tbtn-right{ grid-column:3; grid-row:2; }
+  #tbtn-down{ grid-column:2; grid-row:3; }
+
+  @media (max-width: 480px){
+    #title{ font-size:16px; letter-spacing:2px; }
+    #devCredit{ font-size:8px; letter-spacing:1px; }
+    #hud{ font-size:10px; }
+    #footer{ display:none; }
+  }
+  @media (max-width: 360px){
+    #title{ font-size:13px; letter-spacing:1px; }
+    #devCredit{ font-size:7px; }
+    #hud{ font-size:9px; }
+  }
+  @media (max-height: 700px) and (max-width: 480px){
+    #wrap{ padding:8px; gap:6px; }
+    #stage{ max-width:92vw; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="devCredit">杜杰迪 JD</div>
+  <h1 id="title">PIKMIN VS ZOMBIES</h1>
+  <div id="hud">
+    <div><span class="label">SCORE</span><span id="score">0</span></div>
+    <div><span class="label">HIGH SCORE</span><span id="high">0</span></div>
+    <div><span class="label">LIVES</span><span id="lives"></span></div>
+    <div><span class="label">SOUND</span><button id="muteBtn" aria-label="Toggle sound">🔊</button></div>
+  </div>
+  <div id="stage">
+    <canvas id="game" width="560" height="620"></canvas>
+    <div id="overlay" class="show">
+      <h2 id="overlayTitle">PIKMIN VS ZOMBIES</h2>
+      <p id="overlayText">Arrow keys / WASD to move<br>Eat all dots. Avoid zombies.<br>Power pellets turn the tables — briefly.</p>
+      <button id="startBtn">START</button>
+    </div>
+  </div>
+  <div id="touchpad">
+    <button class="tbtn" id="tbtn-up" aria-label="Up">▲</button>
+    <button class="tbtn" id="tbtn-left" aria-label="Left">◀</button>
+    <button class="tbtn" id="tbtn-center" aria-label="Pause">II</button>
+    <button class="tbtn" id="tbtn-right" aria-label="Right">▶</button>
+    <button class="tbtn" id="tbtn-down" aria-label="Down">▼</button>
+  </div>
+  <div id="footer">ARROW KEYS or WASD to move &nbsp;•&nbsp; P to pause</div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Maze layout ----------
+  // 0 empty, 1 wall, 2 dot, 3 power pellet, 4 empty (already eaten/path), 5 tunnel path (no dot)
+  const layout = [
+    "1111111111111111111111111111",
+    "1222222222222112222222222221",
+    "1211112111112112111112111121",
+    "1311112111112112111112111131",
+    "1211112111112112111112111121",
+    "1222222222222222222222222221",
+    "1211112112111111112112111121",
+    "1211112112111111112112111121",
+    "1222222112222112222112222221",
+    "1111112111110110111112111111",
+    "0000012111110110111112100000",
+    "1111112110000000000112111111",
+    "0000002110111001110112000000",
+    "1111112110111001110112111111",
+    "0000012000111001110021000000",
+    "1111112110111111110112111111",
+    "0000012110000000000112100000",
+    "1111112110111111110112111111",
+    "1222222222222112222222222221",
+    "1211112111112112111112111121",
+    "1211112111112112111112111121",
+    "1322112222222222222211223331",
+    "1112112112111111112112112111",
+    "1112112112111111112112112111",
+    "1222222112222112222112222221",
+    "1211111111112112111111111121",
+    "1211111111112112111111111121",
+    "1222222222222222222222222221",
+    "1111111111111111111111111111",
+  ];
+
+  const ROWS = layout.length;
+  const COLS = layout[0].length;
+  const TILE = 20;
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  canvas.width = COLS*TILE;
+  canvas.height = ROWS*TILE + 20; // small top margin for symmetry
+
+  const OFFSET_Y = 10;
+
+  // grid data, mutable copy (numbers)
+  let grid = [];
+  function buildGrid(){
+    grid = layout.map(row=>row.split('').map(ch=>{
+      if(ch==='1') return 1;
+      if(ch==='2') return 2;
+      if(ch==='3') return 3;
+      return 0;
+    }));
+  }
+  buildGrid();
+
+  let dotsRemaining = 0;
+  function countDots(){
+    dotsRemaining = 0;
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++) if(grid[r][c]===2||grid[r][c]===3) dotsRemaining++;
+  }
+  countDots();
+
+  function isWall(col,row){
+    if(row<0||row>=ROWS) return false; // allow tunnel wrap vertically? we restrict horizontally below
+    if(col<0) col = COLS-1;
+    if(col>=COLS) col = 0;
+    return grid[row][col]===1;
+  }
+
+  function tileCenter(col,row){
+    return {x: col*TILE+TILE/2, y: row*TILE+TILE/2+OFFSET_Y};
+  }
+
+  // ---------- Entities ----------
+  const DIRS = {
+    up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0}
+  };
+
+  const pacman = {
+    col:14, row:21, x:0, y:0,
+    dir:'left', nextDir:'left',
+    speed: 2.0,
+    moving:false,
+    mouth:0,
+    mouthDir:1,
+    alive:true,
+  };
+  const start = tileCenter(pacman.col,pacman.row);
+  pacman.x=start.x; pacman.y=start.y;
+
+  const ghostDefs = [
+    {name:'rotter',  color:'--zombie-skin',       col:14, row:11, scatterCol:26, scatterRow:1},
+    {name:'shambler',color:'--zombie-skin-light', col:13, row:14, scatterCol:1,  scatterRow:1},
+    {name:'ghoul',   color:'--cyan',              col:14, row:14, scatterCol:26, scatterRow:27},
+    {name:'crawler', color:'--orange',            col:14, row:16, scatterCol:1,  scatterRow:27},
+  ];
+
+  let ghosts = [];
+  function resetGhosts(){
+    ghosts = ghostDefs.map(g=>{
+      const c = tileCenter(g.col,g.row);
+      return {
+        ...g,
+        x:c.x, y:c.y,
+        dir:'left',
+        speed:1.7,
+        frightened:false,
+        eaten:false,
+        homeCol:g.col, homeRow:g.row,
+      };
+    });
+  }
+  resetGhosts();
+
+  let score=0, lives=3, highScore = Number(localStorage.getItem('pacman_high')||0);
+  let frightTimer = 0;
+  let gameRunning=false, paused=false;
+  let gameOverFlag=false, winFlag=false;
+  let levelStartGuard = 60; // brief pause frames at level/life start
+
+  const scoreEl = document.getElementById('score');
+  const highEl = document.getElementById('high');
+  const livesEl = document.getElementById('lives');
+  const overlay = document.getElementById('overlay');
+  const overlayTitle = document.getElementById('overlayTitle');
+  const overlayText = document.getElementById('overlayText');
+  const startBtn = document.getElementById('startBtn');
+
+  highEl.textContent = highScore;
+
+  // ---------- Sound engine (synthesized, no audio files) ----------
+  const Sound = (function(){
+    let ctx = null;
+    let muted = false;
+    const muteBtn = document.getElementById('muteBtn');
+
+    function ensureCtx(){
+      if(!ctx){
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return null;
+        ctx = new AC();
+      }
+      if(ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+
+    // Unlock audio on first user gesture (browsers block autoplay until interaction)
+    function unlock(){
+      ensureCtx();
+      window.removeEventListener('keydown', unlock);
+      window.removeEventListener('click', unlock);
+    }
+    window.addEventListener('keydown', unlock, {once:true});
+    window.addEventListener('click', unlock, {once:true});
+
+    muteBtn.addEventListener('click', ()=>{
+      muted = !muted;
+      muteBtn.textContent = muted ? '🔇' : '🔊';
+      muteBtn.classList.toggle('is-muted', muted);
+      if(muted) stopSiren();
+    });
+
+    function tone(freq, dur, opts={}){
+      if(muted) return;
+      const ac = ensureCtx();
+      if(!ac) return;
+      const t0 = ac.currentTime;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = opts.type || 'square';
+      osc.frequency.setValueAtTime(freq, t0);
+      if(opts.glideTo) osc.frequency.linearRampToValueAtTime(opts.glideTo, t0+dur);
+      const vol = opts.vol ?? 0.06;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(vol, t0+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start(t0);
+      osc.stop(t0+dur+0.02);
+    }
+
+    // classic two-note "waka" chomp, alternates pitch each call
+    let chompToggle = false;
+    function chomp(){
+      chompToggle = !chompToggle;
+      tone(chompToggle ? 220 : 150, 0.06, {type:'square', vol:0.045});
+    }
+
+    function dot(){ chomp(); }
+
+    function powerPellet(){
+      if(muted) return;
+      const ac = ensureCtx();
+      if(!ac) return;
+      const t0 = ac.currentTime;
+      [0,1,2,3].forEach(i=>{
+        tone(110 + i*40, 0.12, {type:'sawtooth', vol:0.05});
+      });
+      // staggered descending sweep for drama
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type='sawtooth';
+      osc.frequency.setValueAtTime(500, t0);
+      osc.frequency.exponentialRampToValueAtTime(80, t0+0.5);
+      gain.gain.setValueAtTime(0.05, t0);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.5);
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.start(t0); osc.stop(t0+0.52);
+    }
+
+    function ghostEaten(){
+      if(muted) return;
+      const ac = ensureCtx();
+      if(!ac) return;
+      const t0 = ac.currentTime;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type='sine';
+      osc.frequency.setValueAtTime(900, t0);
+      osc.frequency.exponentialRampToValueAtTime(1800, t0+0.15);
+      gain.gain.setValueAtTime(0.05, t0);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.18);
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.start(t0); osc.stop(t0+0.2);
+    }
+
+    function death(){
+      if(muted) return;
+      stopSiren();
+      const ac = ensureCtx();
+      if(!ac) return;
+      const t0 = ac.currentTime;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type='sawtooth';
+      osc.frequency.setValueAtTime(500, t0);
+      osc.frequency.exponentialRampToValueAtTime(40, t0+1.1);
+      gain.gain.setValueAtTime(0.06, t0);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0+1.15);
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.start(t0); osc.stop(t0+1.2);
+    }
+
+    function startJingle(){
+      if(muted) return;
+      const ac = ensureCtx();
+      if(!ac) return;
+      const notes = [392,392,440,494,392,392,440,494,523,587,523,494,440,392];
+      let t = ac.currentTime + 0.05;
+      notes.forEach((f,i)=>{
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type='square';
+        osc.frequency.setValueAtTime(f, t);
+        gain.gain.setValueAtTime(0.05, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t+0.13);
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.start(t); osc.stop(t+0.14);
+        t += 0.1;
+      });
+    }
+
+    function win(){
+      if(muted) return;
+      const ac = ensureCtx();
+      if(!ac) return;
+      const notes = [523,659,784,1047];
+      let t = ac.currentTime;
+      notes.forEach(f=>{
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type='square';
+        osc.frequency.setValueAtTime(f, t);
+        gain.gain.setValueAtTime(0.06, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t+0.25);
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.start(t); osc.stop(t+0.26);
+        t += 0.16;
+      });
+    }
+
+    // low ambient "siren" while ghosts are actively chasing (not frightened)
+    let sirenOsc=null, sirenGain=null, sirenLfo=null;
+    function startSiren(){
+      if(muted || sirenOsc) return;
+      const ac = ensureCtx();
+      if(!ac) return;
+      sirenOsc = ac.createOscillator();
+      sirenGain = ac.createGain();
+      sirenLfo = ac.createOscillator();
+      const lfoGain = ac.createGain();
+      sirenOsc.type='sine';
+      sirenOsc.frequency.value = 240;
+      sirenLfo.type='sine';
+      sirenLfo.frequency.value = 4;
+      lfoGain.gain.value = 60;
+      sirenLfo.connect(lfoGain);
+      lfoGain.connect(sirenOsc.frequency);
+      sirenGain.gain.value = 0.018;
+      sirenOsc.connect(sirenGain);
+      sirenGain.connect(ac.destination);
+      sirenOsc.start();
+      sirenLfo.start();
+    }
+    function stopSiren(){
+      if(sirenOsc){
+        try{ sirenOsc.stop(); sirenLfo.stop(); }catch(e){}
+        sirenOsc=null; sirenGain=null; sirenLfo=null;
+      }
+    }
+    function frightenedHum(active){
+      // swap siren for a faster, lower hum during frightened mode
+      if(active){
+        stopSiren();
+        if(muted) return;
+        const ac = ensureCtx();
+        if(!ac) return;
+        sirenOsc = ac.createOscillator();
+        sirenGain = ac.createGain();
+        sirenOsc.type='triangle';
+        sirenOsc.frequency.value = 160;
+        sirenGain.gain.value = 0.02;
+        sirenOsc.connect(sirenGain);
+        sirenGain.connect(ac.destination);
+        sirenOsc.start();
+      } else {
+        stopSiren();
+      }
+    }
+
+    return { dot, powerPellet, ghostEaten, death, startJingle, win, startSiren, stopSiren, frightenedHum,
+      get muted(){return muted;} };
+  })();
+
+  function updateLivesDisplay(){
+    livesEl.innerHTML = '';
+    for(let i=0;i<lives;i++){
+      const s = document.createElement('span');
+      s.className='lives-pac';
+      livesEl.appendChild(s);
+    }
+  }
+  updateLivesDisplay();
+
+  // ---------- Input ----------
+  const keyMap = {
+    ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right',
+    w:'up', s:'down', a:'left', d:'right',
+    W:'up', S:'down', A:'left', D:'right'
+  };
+  window.addEventListener('keydown', e=>{
+    if(keyMap[e.key]){
+      pacman.nextDir = keyMap[e.key];
+      e.preventDefault();
+    } else if(e.key==='p' || e.key==='P'){
+      if(gameRunning) togglePause();
+    }
+  });
+
+  // ---------- Touch / mobile controls ----------
+  function isTouchDevice(){
+    return ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches;
+  }
+  if(isTouchDevice()){
+    document.body.classList.add('touch-active');
+  }
+
+  function setDir(dir){
+    pacman.nextDir = dir;
+  }
+
+  // D-pad buttons: respond to touchstart/mousedown for minimal latency, prevent default
+  // to avoid double-firing with click and to stop the page from scrolling/zooming.
+  function bindDirButton(id, dir){
+    const el = document.getElementById(id);
+    if(!el) return;
+    const press = (e)=>{
+      e.preventDefault();
+      setDir(dir);
+      el.classList.add('is-pressed');
+    };
+    const release = (e)=>{
+      el.classList.remove('is-pressed');
+    };
+    el.addEventListener('touchstart', press, {passive:false});
+    el.addEventListener('touchend', release);
+    el.addEventListener('touchcancel', release);
+    el.addEventListener('mousedown', press);
+    el.addEventListener('mouseup', release);
+    el.addEventListener('mouseleave', release);
+  }
+  bindDirButton('tbtn-up','up');
+  bindDirButton('tbtn-down','down');
+  bindDirButton('tbtn-left','left');
+  bindDirButton('tbtn-right','right');
+
+  const centerBtn = document.getElementById('tbtn-center');
+  if(centerBtn){
+    centerBtn.addEventListener('touchstart', e=>{ e.preventDefault(); if(gameRunning) togglePause(); }, {passive:false});
+    centerBtn.addEventListener('click', ()=>{ if(gameRunning) togglePause(); });
+  }
+
+  // swipe gestures directly on the canvas as an alternative to the D-pad
+  (function setupSwipe(){
+    let touchStartX=0, touchStartY=0, touchActive=false;
+    const SWIPE_MIN = 18; // px threshold before a swipe registers (in CSS pixels)
+
+    canvas.addEventListener('touchstart', e=>{
+      if(e.touches.length!==1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchActive = true;
+    }, {passive:true});
+
+    canvas.addEventListener('touchmove', e=>{
+      if(!touchActive) return;
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+      if(Math.abs(dx) < SWIPE_MIN && Math.abs(dy) < SWIPE_MIN) return;
+      if(Math.abs(dx) > Math.abs(dy)){
+        setDir(dx > 0 ? 'right' : 'left');
+      } else {
+        setDir(dy > 0 ? 'down' : 'up');
+      }
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      e.preventDefault();
+    }, {passive:false});
+
+    canvas.addEventListener('touchend', ()=>{ touchActive=false; });
+  })();
+
+  function togglePause(){
+    paused = !paused;
+    if(paused){
+      overlayTitle.textContent='PAUSED';
+      overlayText.innerHTML='Press P to resume';
+      overlay.classList.add('show');
+      startBtn.style.display='none';
+      Sound.stopSiren();
+    } else {
+      overlay.classList.remove('show');
+      startBtn.style.display='';
+      if(frightTimer>0) Sound.frightenedHum(true);
+      else Sound.startSiren();
+      requestAnimationFrame(loop);
+    }
+  }
+
+  startBtn.addEventListener('click', ()=>{
+    if(gameOverFlag || winFlag){
+      fullReset();
+    }
+    overlay.classList.remove('show');
+    gameRunning = true;
+    levelStartGuard = Math.max(levelStartGuard, 60);
+    Sound.startJingle();
+    requestAnimationFrame(loop);
+  });
+
+  // ---------- Movement helpers ----------
+  function canMove(col,row,dir){
+    const d = DIRS[dir];
+    const targetCol = col + d.x;
+    const targetRow = row + d.y;
+    return !isWall(targetCol, targetRow);
+  }
+
+  function wrapCol(col){
+    if(col<0) return COLS-1;
+    if(col>=COLS) return 0;
+    return col;
+  }
+
+  // Pac-Man moves on a grid but with smooth pixel interpolation.
+  function updatePacman(){
+    const tc = tileCenter(pacman.col,pacman.row);
+    const atCenterX = Math.abs(pacman.x-tc.x) < pacman.speed*0.6;
+    const atCenterY = Math.abs(pacman.y-tc.y) < pacman.speed*0.6;
+    const atCenter = atCenterX && atCenterY;
+
+    if(atCenter){
+      pacman.x = tc.x; pacman.y = tc.y;
+      // try to turn
+      if(canMove(pacman.col,pacman.row,pacman.nextDir)){
+        pacman.dir = pacman.nextDir;
+      }
+      if(!canMove(pacman.col,pacman.row,pacman.dir)){
+        pacman.moving=false;
+      } else {
+        pacman.moving=true;
+        pacman.col = wrapCol(pacman.col + DIRS[pacman.dir].x);
+        pacman.row += DIRS[pacman.dir].y;
+      }
+    }
+
+    if(pacman.moving){
+      const target = tileCenter(pacman.col,pacman.row);
+      // handle tunnel wrap visually
+      let dx = target.x - pacman.x;
+      if(Math.abs(dx) > canvas.width/2){ // wrapped
+        pacman.x = pacman.x < target.x ? canvas.width+TILE : -TILE;
+        dx = target.x - pacman.x;
+      }
+      const dy = target.y - pacman.y;
+      const dist = Math.hypot(dx,dy);
+      if(dist <= pacman.speed){
+        pacman.x = target.x; pacman.y = target.y;
+      } else {
+        pacman.x += (dx/dist)*pacman.speed;
+        pacman.y += (dy/dist)*pacman.speed;
+      }
+    }
+
+    // mouth animation
+    pacman.mouth += 0.18*pacman.mouthDir;
+    if(pacman.mouth>1){pacman.mouth=1; pacman.mouthDir=-1;}
+    if(pacman.mouth<0){pacman.mouth=0; pacman.mouthDir=1;}
+
+    // eat dots
+    const cellCol = Math.round((pacman.x-TILE/2)/TILE);
+    const cellRow = Math.round((pacman.y-OFFSET_Y-TILE/2)/TILE);
+    if(cellRow>=0 && cellRow<ROWS){
+      const cc = wrapCol(cellCol);
+      const cell = grid[cellRow][cc];
+      if(cell===2){
+        grid[cellRow][cc]=0;
+        score += 10;
+        dotsRemaining--;
+        Sound.dot();
+      } else if(cell===3){
+        grid[cellRow][cc]=0;
+        score += 50;
+        dotsRemaining--;
+        frightTimer = 360; // ~6s at 60fps
+        ghosts.forEach(g=>{ if(!g.eaten) g.frightened=true; });
+        Sound.powerPellet();
+        Sound.frightenedHum(true);
+      }
+    }
+    if(dotsRemaining<=0){
+      winFlag = true;
+      endGame(true);
+    }
+  }
+
+  // ---------- Ghost AI ----------
+  function ghostTileColRow(g){
+    return {
+      col: wrapCol(Math.round((g.x-TILE/2)/TILE)),
+      row: Math.round((g.y-OFFSET_Y-TILE/2)/TILE)
+    };
+  }
+
+  function chooseGhostDir(g, target){
+    const {col,row} = ghostTileColRow(g);
+    const opts = ['up','down','left','right'].filter(d=>{
+      // forbid reversing unless it's the only option
+      return canMove(col,row,d);
+    });
+    if(opts.length===0) return g.dir;
+    // remove reverse of current dir if other options exist
+    const reverse = {up:'down',down:'up',left:'right',right:'left'}[g.dir];
+    let filtered = opts.filter(d=>d!==reverse);
+    if(filtered.length===0) filtered = opts;
+
+    let best=filtered[0], bestDist=Infinity;
+    filtered.forEach(d=>{
+      const nd = DIRS[d];
+      const nc = wrapCol(col+nd.x), nr = row+nd.y;
+      const dist = (nc-target.col)**2 + (nr-target.row)**2;
+      if(dist<bestDist){bestDist=dist; best=d;}
+    });
+    return best;
+  }
+
+  function updateGhost(g){
+    const tc = tileCenter(ghostTileColRow(g).col, ghostTileColRow(g).row);
+    const atCenter = Math.abs(g.x-tc.x)<g.speed*0.6 && Math.abs(g.y-tc.y)<g.speed*0.6;
+
+    if(atCenter){
+      g.x=tc.x; g.y=tc.y;
+      const {col,row} = ghostTileColRow(g);
+
+      let target;
+      if(g.eaten){
+        target = {col:g.homeCol, row:g.homeRow};
+      } else if(g.frightened){
+        target = {col: Math.random()*COLS|0, row: Math.random()*ROWS|0};
+      } else {
+        target = {col: pacman.col, row: pacman.row};
+      }
+      g.dir = chooseGhostDir(g, target);
+      const d = DIRS[g.dir];
+      // move to next tile center reference
+      g._nextCol = wrapCol(col+d.x);
+      g._nextRow = row+d.y;
+    }
+
+    const targetCenter = tileCenter(g._nextCol ?? ghostTileColRow(g).col, g._nextRow ?? ghostTileColRow(g).row);
+    let dx = targetCenter.x - g.x;
+    if(Math.abs(dx) > canvas.width/2){
+      g.x = g.x < targetCenter.x ? canvas.width+TILE : -TILE;
+      dx = targetCenter.x - g.x;
+    }
+    const dy = targetCenter.y - g.y;
+    const dist = Math.hypot(dx,dy);
+    const spd = g.eaten ? g.speed*2 : (g.frightened ? g.speed*0.6 : g.speed);
+    if(dist<=spd){
+      g.x=targetCenter.x; g.y=targetCenter.y;
+    } else {
+      g.x += (dx/dist)*spd;
+      g.y += (dy/dist)*spd;
+    }
+
+    if(g.eaten){
+      const home = tileCenter(g.homeCol,g.homeRow);
+      if(Math.abs(g.x-home.x)<2 && Math.abs(g.y-home.y)<2){
+        g.eaten=false;
+        g.frightened=false;
+      }
+    }
+  }
+
+  function collide(a,b,r){
+    return Math.hypot(a.x-b.x,a.y-b.y) < r;
+  }
+
+  function checkCollisions(){
+    ghosts.forEach(g=>{
+      if(collide(pacman,g,12)){
+        if(g.frightened && !g.eaten){
+          g.eaten=true;
+          g.frightened=false;
+          score += 200;
+          Sound.ghostEaten();
+        } else if(!g.eaten){
+          Sound.death();
+          loseLife();
+        }
+      }
+    });
+  }
+
+  function loseLife(){
+    Sound.stopSiren();
+    lives--;
+    updateLivesDisplay();
+    if(lives<=0){
+      endGame(false);
+    } else {
+      resetPositions();
+      levelStartGuard = 60;
+    }
+  }
+
+  function resetPositions(){
+    const c = tileCenter(14,21);
+    pacman.x=c.x; pacman.y=c.y; pacman.col=14; pacman.row=21;
+    pacman.dir='left'; pacman.nextDir='left'; pacman.moving=false;
+    resetGhosts();
+    frightTimer=0;
+  }
+
+  function endGame(won){
+    gameRunning=false;
+    gameOverFlag = !won;
+    winFlag = won;
+    Sound.stopSiren();
+    if(won) Sound.win();
+    if(score>highScore){
+      highScore=score;
+      localStorage.setItem('pacman_high', String(highScore));
+      highEl.textContent = highScore;
+    }
+    overlayTitle.textContent = won ? 'YOU WIN!' : 'GAME OVER';
+    overlayText.innerHTML = `Score: ${score}<br>${won? 'All dots cleared!' : 'Better luck next time.'}`;
+    startBtn.textContent = 'PLAY AGAIN';
+    startBtn.style.display='';
+    overlay.classList.add('show');
+  }
+
+  function fullReset(){
+    buildGrid();
+    countDots();
+    score=0; lives=3; gameOverFlag=false; winFlag=false;
+    scoreEl.textContent='0';
+    updateLivesDisplay();
+    resetPositions();
+    startBtn.textContent='START';
+  }
+
+  // ---------- Rendering ----------
+  function drawMaze(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const v = grid[r][c];
+        const x = c*TILE, y = r*TILE+OFFSET_Y;
+        if(v===1){
+          ctx.fillStyle = getCss('--wall');
+          ctx.fillRect(x+2,y+2,TILE-4,TILE-4);
+          ctx.strokeStyle = getCss('--wall-glow');
+          ctx.lineWidth=1;
+          ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
+        } else if(v===2){
+          drawFlower(x+TILE/2, y+TILE/2, 2.6, getCss('--pellet'), getCss('--flower-center'));
+        } else if(v===3){
+          const pulse = 1 + Math.sin(Date.now()/150)*0.18;
+          drawFlower(x+TILE/2, y+TILE/2, 5.5*pulse, getCss('--pellet'), getCss('--flower-center'));
+        }
+      }
+    }
+  }
+
+  // small 5-petal flower used for dots and (at larger scale) power pellets
+  function drawFlower(cx, cy, r, petalColor, centerColor){
+    const petals = 5;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.fillStyle = petalColor;
+    for(let i=0;i<petals;i++){
+      const angle = (i/petals)*Math.PI*2;
+      ctx.save();
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.ellipse(0, -r*0.62, r*0.46, r*0.62, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = centerColor;
+    ctx.beginPath();
+    ctx.arc(0, 0, r*0.38, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function getCss(varName){
+    return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  }
+
+  function drawPikmin(){
+    const dir = pacman.dir;
+    // walk-bob driven by the same oscillating "mouth" value already used for animation timing
+    const bob = Math.sin(pacman.mouth*Math.PI) * 1.6;
+    const leafSway = Math.sin(pacman.mouth*Math.PI) * 0.18;
+    const facing = {right:1, left:-1, up:0, down:0}[dir];
+    const flipY = dir === 'up';
+
+    ctx.save();
+    ctx.translate(pacman.x, pacman.y + bob*0.3);
+
+    // little feet (only visible front-on or to the side, bob opposite the body)
+    ctx.fillStyle = '#a8341f';
+    const footBob = -bob*0.5;
+    ctx.beginPath();
+    ctx.ellipse(-3.2, 7.5+footBob, 2.4, 1.6, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(3.2, 7.5-footBob, 2.4, 1.6, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // body (squashed slightly with the bob for a soft bounce)
+    const squash = 1 - Math.abs(bob)*0.03;
+    ctx.save();
+    ctx.scale(1, squash);
+    const bodyGrad = ctx.createRadialGradient(-2,-3,1, 0,0,9);
+    bodyGrad.addColorStop(0, getCss('--pikmin-belly'));
+    bodyGrad.addColorStop(0.55, getCss('--pikmin-body'));
+    bodyGrad.addColorStop(1, getCss('--pikmin-body-dark'));
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 1, 7.6, 7, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // head/nose bump in the facing direction
+    if(facing !== 0){
+      ctx.fillStyle = getCss('--pikmin-belly');
+      ctx.beginPath();
+      ctx.ellipse(facing*5, 0, 3.2, 2.6, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // eyes: big, round, white with black pupils — shift slightly with facing direction
+    const eyeDX = facing*1.6;
+    const eyeDY = flipY ? -1.5 : 0.5;
+    [-3, 3].forEach(side=>{
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(side*0.9 + eyeDX*0.3, -1+eyeDY, 2.3, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.arc(side*0.9 + eyeDX, -1+eyeDY, 1.15, 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    // stem on top of the head
+    ctx.strokeStyle = getCss('--pikmin-stem');
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, -6.5);
+    ctx.lineTo(leafSway*4, -10.5);
+    ctx.stroke();
+
+    // single leaf, swaying gently as it walks
+    ctx.save();
+    ctx.translate(leafSway*4, -10.5);
+    ctx.rotate(leafSway*0.6);
+    const leafGrad = ctx.createLinearGradient(-4,0,4,-5);
+    leafGrad.addColorStop(0, getCss('--pikmin-leaf-dark'));
+    leafGrad.addColorStop(1, getCss('--pikmin-leaf'));
+    ctx.fillStyle = leafGrad;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.quadraticCurveTo(-6,-3, -1,-7);
+    ctx.quadraticCurveTo(5,-5, 0,0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  function drawZombie(g){
+    ctx.save();
+    ctx.translate(g.x,g.y);
+
+    const t = Date.now()/220 + (g.col||0)*1.7; // per-zombie phase offset
+    const shamble = Math.sin(t); // -1..1 shuffle cycle
+    const lurch = shamble * 0.05; // body tilt while shuffling
+
+    let bodyColor, shirtColor;
+    if(g.eaten){
+      bodyColor = 'rgba(220,225,210,0.3)';
+      shirtColor = 'rgba(220,225,210,0.2)';
+    } else if(g.frightened){
+      bodyColor = (frightTimer<90 && Math.floor(frightTimer/10)%2===0) ? '#e8e4d0' : '#3a4a55';
+      shirtColor = bodyColor;
+    } else {
+      bodyColor = getCss(g.color);
+      shirtColor = getCss('--zombie-tatter');
+    }
+
+    if(!g.eaten){
+      ctx.save();
+      ctx.rotate(lurch);
+
+      // legs: stumpy, alternating shuffle (no real knee bend, just a dead stagger)
+      ctx.fillStyle = shirtColor;
+      const legSwing = shamble*2.2;
+      ctx.fillRect(-4.5, 5+Math.max(0,legSwing*0.4), 3, 6-Math.max(0,legSwing*0.4));
+      ctx.fillRect(1.5, 5+Math.max(0,-legSwing*0.4), 3, 6-Math.max(0,-legSwing*0.4));
+
+      // torso: torn shirt, slightly wider at shoulders
+      const torsoGrad = ctx.createLinearGradient(0,-3,0,6);
+      torsoGrad.addColorStop(0, shirtColor);
+      torsoGrad.addColorStop(1, 'rgba(0,0,0,0.25)');
+      ctx.fillStyle = torsoGrad;
+      ctx.beginPath();
+      ctx.moveTo(-6,-3);
+      ctx.lineTo(6,-3);
+      ctx.lineTo(5,4);
+      // ragged torn hem along the bottom of the shirt
+      ctx.lineTo(3,2.5);
+      ctx.lineTo(1.2,5);
+      ctx.lineTo(-1,2.8);
+      ctx.lineTo(-3,5.5);
+      ctx.lineTo(-5,2.8);
+      ctx.closePath();
+      ctx.fill();
+
+      // dangling, loose-jointed arms that swing opposite the legs
+      ctx.strokeStyle = bodyColor;
+      ctx.lineWidth = 2.6;
+      ctx.lineCap = 'round';
+      const armSwing = -shamble*3.5;
+      ctx.beginPath();
+      ctx.moveTo(-6,-2);
+      ctx.lineTo(-8.5, 3+armSwing*0.3);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(6,-2);
+      ctx.lineTo(8.5, 3-armSwing*0.3);
+      ctx.stroke();
+
+      // head
+      ctx.fillStyle = bodyColor;
+      ctx.beginPath();
+      ctx.arc(0,-8,5.5,0,Math.PI*2);
+      ctx.fill();
+
+      // grimy shading on one side of the head for a decayed look
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.beginPath();
+      ctx.arc(0,-8,5.5,Math.PI*0.55,Math.PI*1.05);
+      ctx.closePath();
+      ctx.fill();
+
+      // messy hair tufts on top of the head
+      ctx.fillStyle = getCss('--zombie-tatter');
+      [[-3.2,-12.5],[-0.8,-13.5],[1.6,-13.2],[3.6,-11.8]].forEach(([hx,hy])=>{
+        ctx.beginPath();
+        ctx.moveTo(hx,hy+2.5);
+        ctx.lineTo(hx-0.8,hy);
+        ctx.lineTo(hx+1.1,hy+2.1);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      ctx.restore();
+
+      // face: uneven, droopy eyes — one half-lidded, a decayed gash, downturned mouth
+      const headTilt = lurch;
+      ctx.save();
+      ctx.rotate(headTilt);
+      const dx = {up:0,down:0,left:-1,right:1}[g.dir]*0.9;
+      const dy = {up:-1,down:1,left:0,right:0}[g.dir]*0.9;
+
+      ctx.fillStyle = g.frightened ? '#1a2230' : '#d8d4b8';
+      ctx.beginPath(); ctx.ellipse(-2.2,-8.5,1.7,1.4,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(2.2,-8.8,1.5,1.05,-0.15,0,Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = g.frightened ? '#e8e4d0' : '#5a2a1a';
+      ctx.beginPath(); ctx.arc(-2.2+dx,-8.5+dy,0.85,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(2.2+dx*0.8,-8.8+dy*0.8,0.7,0,Math.PI*2); ctx.fill();
+
+      // torn gash / stitch mark for grim texture
+      ctx.strokeStyle = 'rgba(40,20,10,0.55)';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(-1.5,-10.5);
+      ctx.lineTo(0.5,-9.5);
+      ctx.lineTo(-1,-8.5);
+      ctx.stroke();
+
+      // downturned mouth
+      if(!g.frightened){
+        ctx.strokeStyle = getCss('--zombie-mouth');
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(-1.8, -5.8);
+        ctx.quadraticCurveTo(0, -4.4, 1.8, -5.6);
+        ctx.stroke();
+      }
+      ctx.restore();
+    } else {
+      // eaten: just a faint pair of drifting eyes, like a departed spirit
+      ctx.fillStyle = bodyColor;
+      const dx = {up:0,down:0,left:-1,right:1}[g.dir]*1.2;
+      const dy = {up:-1,down:1,left:0,right:0}[g.dir]*1.2;
+      ctx.beginPath(); ctx.arc(-3+dx,-3+dy,1.8,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(3+dx,-3+dy,1.8,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ---------- Main loop ----------
+  function loop(){
+    if(!gameRunning || paused) return;
+
+    if(levelStartGuard>0){
+      levelStartGuard--;
+      if(levelStartGuard===0) Sound.startSiren();
+    } else {
+      updatePacman();
+      ghosts.forEach(updateGhost);
+      checkCollisions();
+      if(frightTimer>0){
+        frightTimer--;
+        if(frightTimer===0){
+          ghosts.forEach(g=>{ if(!g.eaten) g.frightened=false; });
+          Sound.frightenedHum(false);
+          Sound.startSiren();
+        }
+      }
+    }
+
+    drawMaze();
+    ghosts.forEach(drawZombie);
+    drawPikmin();
+    scoreEl.textContent = score;
+
+    if(gameRunning) requestAnimationFrame(loop);
+  }
+
+  // initial paint behind overlay
+  drawMaze();
+  ghosts.forEach(drawZombie);
+  drawPikmin();
+
+})();
+</script>
+</body>
+</html>
