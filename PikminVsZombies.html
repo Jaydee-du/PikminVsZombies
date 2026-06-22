@@ -28,6 +28,10 @@
     --zombie-tatter:#3f4d24;
     --zombie-mouth:#2a1810;
     --flower-center:#8a5a1f;
+    --green-flower:#5fe05a;
+    --green-flower-center:#2e7d28;
+    --sword-blade:#d8e8ee;
+    --sword-hilt:#8a5a1f;
   }
   *{box-sizing:border-box;}
   html,body{
@@ -56,7 +60,7 @@
     gap:10px;
     padding:16px;
     width:100%;
-    max-width:600px;
+    max-width:680px;
     margin:0 auto;
   }
   #hud{
@@ -70,11 +74,26 @@
     flex-wrap:wrap;
   }
   #hud .label{font-size:10px; opacity:.7; display:block; margin-bottom:4px;}
+  #bigPikminBanner{
+    display:none;
+    width:100%;
+    text-align:center;
+    font-size:11px;
+    letter-spacing:1px;
+    color:#bfffb0;
+    text-shadow:0 0 8px rgba(95,224,90,.8);
+    animation:bigPikminPulse 0.6s ease-in-out infinite alternate;
+  }
+  #bigPikminBanner.show{ display:block; }
+  @keyframes bigPikminPulse{
+    from{ opacity:.7; }
+    to{ opacity:1; }
+  }
   #stage{
     position:relative;
     width:100%;
-    max-width:560px;
-    aspect-ratio: 28 / 30;
+    max-width:644px;
+    aspect-ratio: 92 / 85;
   }
   canvas{
     background:#000;
@@ -87,10 +106,10 @@
     touch-action:none;
   }
   #devCredit{
-    font-size:10px;
+    font-size:14px;
     letter-spacing:2px;
     color:var(--text);
-    opacity:.65;
+    opacity:.85;
     text-align:center;
     margin:0;
     font-family:'Press Start 2P', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Courier New', monospace;
@@ -174,51 +193,72 @@
   #muteBtn:hover{ opacity:1; border-color:var(--pac); color:var(--pac); }
   #muteBtn.is-muted{ opacity:.4; }
 
-  /* ---------- Touch controls ---------- */
-  #touchpad{
+  /* ---------- Touch swipe hint ---------- */
+  #swipeHint{
     display:none;
-    width:100%;
-    max-width:300px;
-    margin-top:4px;
-    user-select:none;
-    -webkit-user-select:none;
-    grid-template-columns: 64px 64px 64px;
-    grid-template-rows: 64px 64px 64px;
-    justify-content:center;
-    gap:6px;
-  }
-  .touch-active #touchpad{ display:grid; }
-  .tbtn{
-    background:rgba(33,33,33,.55);
-    border:1px solid var(--wall-glow);
-    border-radius:8px;
-    display:flex;
+    position:absolute;
+    inset:0;
+    pointer-events:none;
     align-items:center;
     justify-content:center;
+    z-index:5;
+  }
+  .touch-active #swipeHint.show{ display:flex; }
+  #swipeHint .swipe-icon{
+    width:70px;
+    height:70px;
+    opacity:0;
+    animation: swipeSweep 2.2s ease-in-out infinite;
+  }
+  #swipeHint .swipe-icon svg{
+    width:100%;
+    height:100%;
+    filter: drop-shadow(0 0 6px rgba(0,0,0,.6));
+  }
+  @keyframes swipeSweep{
+    0%   { opacity:0; transform:translateX(-22px); }
+    15%  { opacity:.85; }
+    50%  { opacity:.85; transform:translateX(22px); }
+    70%  { opacity:0; transform:translateX(22px); }
+    100% { opacity:0; transform:translateX(-22px); }
+  }
+  #pauseBtn{
+    font-family:inherit;
+    background:transparent;
+    border:1px solid var(--text);
     color:var(--text);
-    font-size:20px;
-    -webkit-tap-highlight-color:transparent;
-    touch-action:none;
+    font-size:11px;
+    line-height:1;
+    padding:3px 8px;
+    cursor:pointer;
+    border-radius:2px;
+    opacity:.8;
   }
-  .tbtn:active, .tbtn.is-pressed{
-    background:rgba(224,112,58,.5);
-    border-color:var(--pac);
+  #pauseBtn:hover{ opacity:1; border-color:var(--pac); color:var(--pac); }
+  #saveBtn{
+    font-family:inherit;
+    background:transparent;
+    border:1px solid var(--text);
+    color:var(--text);
+    font-size:13px;
+    line-height:1;
+    padding:3px 7px;
+    cursor:pointer;
+    border-radius:2px;
+    opacity:.8;
   }
-  #tbtn-up{ grid-column:2; grid-row:1; }
-  #tbtn-left{ grid-column:1; grid-row:2; }
-  #tbtn-center{ grid-column:2; grid-row:2; font-size:13px; opacity:.7; }
-  #tbtn-right{ grid-column:3; grid-row:2; }
-  #tbtn-down{ grid-column:2; grid-row:3; }
+  #saveBtn:hover{ opacity:1; border-color:var(--pac); color:var(--pac); }
+  #saveBtn.saved{ border-color:var(--green-flower); color:var(--green-flower); }
 
   @media (max-width: 480px){
     #title{ font-size:16px; letter-spacing:2px; }
-    #devCredit{ font-size:8px; letter-spacing:1px; }
+    #devCredit{ font-size:11px; letter-spacing:1px; }
     #hud{ font-size:10px; }
     #footer{ display:none; }
   }
   @media (max-width: 360px){
     #title{ font-size:13px; letter-spacing:1px; }
-    #devCredit{ font-size:7px; }
+    #devCredit{ font-size:9px; }
     #hud{ font-size:9px; }
   }
   @media (max-height: 700px) and (max-width: 480px){
@@ -229,28 +269,33 @@
 </head>
 <body>
 <div id="wrap">
-  <div id="devCredit">杜杰迪 JD</div>
+  <div id="devCredit">Developer : JD 杜杰迪</div>
   <h1 id="title">PIKMIN VS ZOMBIES</h1>
   <div id="hud">
     <div><span class="label">SCORE</span><span id="score">0</span></div>
     <div><span class="label">HIGH SCORE</span><span id="high">0</span></div>
     <div><span class="label">LIVES</span><span id="lives"></span></div>
     <div><span class="label">SOUND</span><button id="muteBtn" aria-label="Toggle sound">🔊</button></div>
+    <div><span class="label">GAME</span><button id="pauseBtn" aria-label="Pause">II</button></div>
+    <div><span class="label">SAVE</span><button id="saveBtn" aria-label="Save screenshot">💾</button></div>
   </div>
+  <div id="bigPikminBanner">⚔️ BIG PIKMIN — <span id="bigPikminTime">0</span>s</div>
   <div id="stage">
-    <canvas id="game" width="560" height="620"></canvas>
+    <canvas id="game" width="644" height="595"></canvas>
+    <div id="swipeHint">
+      <div class="swipe-icon">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 50 H70" stroke="#ffffff" stroke-width="6" stroke-linecap="round" fill="none"/>
+          <path d="M55 32 L75 50 L55 68" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="20" cy="50" r="9" fill="#ffffff" opacity="0.9"/>
+        </svg>
+      </div>
+    </div>
     <div id="overlay" class="show">
       <h2 id="overlayTitle">PIKMIN VS ZOMBIES</h2>
-      <p id="overlayText">Arrow keys / WASD to move<br>Eat all dots. Avoid zombies.<br>Power pellets turn the tables — briefly.</p>
+      <p id="overlayText">Swipe the maze to move (or use arrow keys / WASD on desktop).<br>Eat all dots. Avoid zombies.<br>Power pellets turn the tables — briefly.<br>Find a green flower to become Big Pikmin!</p>
       <button id="startBtn">START</button>
     </div>
-  </div>
-  <div id="touchpad">
-    <button class="tbtn" id="tbtn-up" aria-label="Up">▲</button>
-    <button class="tbtn" id="tbtn-left" aria-label="Left">◀</button>
-    <button class="tbtn" id="tbtn-center" aria-label="Pause">II</button>
-    <button class="tbtn" id="tbtn-right" aria-label="Right">▶</button>
-    <button class="tbtn" id="tbtn-down" aria-label="Down">▼</button>
   </div>
   <div id="footer">ARROW KEYS or WASD to move &nbsp;•&nbsp; P to pause</div>
 </div>
@@ -269,7 +314,6 @@
     "1211112111112112111112111121",
     "1222222222222222222222222221",
     "1211112112111111112112111121",
-    "1211112112111111112112111121",
     "1222222112222112222112222221",
     "1111112111110110111112111111",
     "0000012111110110111112100000",
@@ -282,12 +326,9 @@
     "1111112110111111110112111111",
     "1222222222222112222222222221",
     "1211112111112112111112111121",
-    "1211112111112112111112111121",
     "1322112222222222222211223331",
     "1112112112111111112112112111",
-    "1112112112111111112112112111",
     "1222222112222112222112222221",
-    "1211111111112112111111111121",
     "1211111111112112111111111121",
     "1222222222222222222222222221",
     "1111111111111111111111111111",
@@ -295,7 +336,7 @@
 
   const ROWS = layout.length;
   const COLS = layout[0].length;
-  const TILE = 20;
+  const TILE = 23;
 
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
@@ -340,7 +381,7 @@
   };
 
   const pacman = {
-    col:14, row:21, x:0, y:0,
+    col:14, row:19, x:0, y:0,
     dir:'left', nextDir:'left',
     speed: 2.0,
     moving:false,
@@ -352,10 +393,10 @@
   pacman.x=start.x; pacman.y=start.y;
 
   const ghostDefs = [
-    {name:'rotter',  color:'--zombie-skin',       col:14, row:11, scatterCol:26, scatterRow:1},
-    {name:'shambler',color:'--zombie-skin-light', col:13, row:14, scatterCol:1,  scatterRow:1},
-    {name:'ghoul',   color:'--cyan',              col:14, row:14, scatterCol:26, scatterRow:27},
-    {name:'crawler', color:'--orange',            col:14, row:16, scatterCol:1,  scatterRow:27},
+    {name:'rotter',  color:'--zombie-skin',       col:14, row:10, scatterCol:26, scatterRow:1},
+    {name:'shambler',color:'--zombie-skin-light', col:13, row:13, scatterCol:1,  scatterRow:1},
+    {name:'ghoul',   color:'--cyan',              col:14, row:13, scatterCol:26, scatterRow:23},
+    {name:'crawler', color:'--orange',            col:14, row:15, scatterCol:1,  scatterRow:23},
   ];
 
   let ghosts = [];
@@ -366,7 +407,7 @@
         ...g,
         x:c.x, y:c.y,
         dir:'left',
-        speed:1.7,
+        speed:0.95,
         frightened:false,
         eaten:false,
         homeCol:g.col, homeRow:g.row,
@@ -381,6 +422,17 @@
   let gameOverFlag=false, winFlag=false;
   let levelStartGuard = 60; // brief pause frames at level/life start
 
+  // ---------- Big Pikmin power-up (green flower) ----------
+  // Fixed map spots where a green flower can spawn. Each respawns on a cooldown
+  // after being collected, so the power-up is rare but reliably available again.
+  const bigPikminSpots = [
+    {col:1,  row:1,  active:true, cooldown:0},
+    {col:22, row:19, active:true, cooldown:0},
+  ];
+  const BIG_PIKMIN_DURATION = 480; // ~8s at 60fps
+  const BIG_PIKMIN_RESPAWN_DELAY = 900; // ~15s at 60fps after being eaten
+  let bigPikminTimer = 0;
+
   const scoreEl = document.getElementById('score');
   const highEl = document.getElementById('high');
   const livesEl = document.getElementById('lives');
@@ -388,6 +440,8 @@
   const overlayTitle = document.getElementById('overlayTitle');
   const overlayText = document.getElementById('overlayText');
   const startBtn = document.getElementById('startBtn');
+  const bigPikminBanner = document.getElementById('bigPikminBanner');
+  const bigPikminTimeEl = document.getElementById('bigPikminTime');
 
   highEl.textContent = highScore;
 
@@ -488,6 +542,58 @@
       osc.start(t0); osc.stop(t0+0.2);
     }
 
+    function bigPikmin(){
+      if(muted) return;
+      const ac = ensureCtx();
+      if(!ac) return;
+      const notes = [330,415,494,660]; // heroic rising arpeggio
+      let t = ac.currentTime;
+      notes.forEach(f=>{
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type='triangle';
+        osc.frequency.setValueAtTime(f, t);
+        gain.gain.setValueAtTime(0.07, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t+0.18);
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.start(t); osc.stop(t+0.2);
+        t += 0.09;
+      });
+    }
+
+    function bigPikminEnd(){
+      if(muted) return;
+      const ac = ensureCtx();
+      if(!ac) return;
+      const t0 = ac.currentTime;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type='triangle';
+      osc.frequency.setValueAtTime(500, t0);
+      osc.frequency.exponentialRampToValueAtTime(220, t0+0.35);
+      gain.gain.setValueAtTime(0.05, t0);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.38);
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.start(t0); osc.stop(t0+0.4);
+    }
+
+    function swordSlash(){
+      if(muted) return;
+      const ac = ensureCtx();
+      if(!ac) return;
+      const t0 = ac.currentTime;
+      // quick noisy metallic swish using a fast downward sweep plus a short burst
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type='sawtooth';
+      osc.frequency.setValueAtTime(1800, t0);
+      osc.frequency.exponentialRampToValueAtTime(300, t0+0.1);
+      gain.gain.setValueAtTime(0.06, t0);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.12);
+      osc.connect(gain); gain.connect(ac.destination);
+      osc.start(t0); osc.stop(t0+0.13);
+    }
+
     function death(){
       if(muted) return;
       stopSiren();
@@ -543,37 +649,71 @@
       });
     }
 
-    // low ambient "siren" while ghosts are actively chasing (not frightened)
-    let sirenOsc=null, sirenGain=null, sirenLfo=null;
+    // ---------- Ambient loops ----------
+    // Base "siren": a slow, dissonant, lurching drone — two close-detuned low
+    // oscillators beating against each other, plus an occasional low groan,
+    // for an uneasy Plants-vs-Zombies-style horde-is-coming feeling.
+    let sirenOsc=null, sirenOsc2=null, sirenGain=null, sirenLfo=null, moanInterval=null;
+
     function startSiren(){
       if(muted || sirenOsc) return;
       const ac = ensureCtx();
       if(!ac) return;
       sirenOsc = ac.createOscillator();
+      sirenOsc2 = ac.createOscillator();
       sirenGain = ac.createGain();
       sirenLfo = ac.createOscillator();
       const lfoGain = ac.createGain();
-      sirenOsc.type='sine';
-      sirenOsc.frequency.value = 240;
-      sirenLfo.type='sine';
-      sirenLfo.frequency.value = 4;
-      lfoGain.gain.value = 60;
+
+      sirenOsc.type = 'sawtooth';
+      sirenOsc.frequency.value = 73; // low D-ish drone
+      sirenOsc2.type = 'sawtooth';
+      sirenOsc2.frequency.value = 77; // slightly detuned for an uneasy beating effect
+
+      sirenLfo.type = 'sine';
+      sirenLfo.frequency.value = 0.18; // slow, lurching wobble
+      lfoGain.gain.value = 5;
       sirenLfo.connect(lfoGain);
       lfoGain.connect(sirenOsc.frequency);
-      sirenGain.gain.value = 0.018;
+      lfoGain.connect(sirenOsc2.frequency);
+
+      sirenGain.gain.value = 0.022;
       sirenOsc.connect(sirenGain);
+      sirenOsc2.connect(sirenGain);
       sirenGain.connect(ac.destination);
       sirenOsc.start();
+      sirenOsc2.start();
       sirenLfo.start();
+
+      // occasional low groaning moan, like a distant zombie
+      moanInterval = setInterval(()=>{
+        if(muted) return;
+        const a2 = ensureCtx();
+        if(!a2) return;
+        const t0 = a2.currentTime;
+        const mOsc = a2.createOscillator();
+        const mGain = a2.createGain();
+        mOsc.type = 'sawtooth';
+        mOsc.frequency.setValueAtTime(110 + Math.random()*20, t0);
+        mOsc.frequency.exponentialRampToValueAtTime(60, t0+1.1);
+        mGain.gain.setValueAtTime(0, t0);
+        mGain.gain.linearRampToValueAtTime(0.035, t0+0.2);
+        mGain.gain.exponentialRampToValueAtTime(0.0001, t0+1.3);
+        mOsc.connect(mGain); mGain.connect(a2.destination);
+        mOsc.start(t0); mOsc.stop(t0+1.4);
+      }, 3200 + Math.random()*1800);
     }
     function stopSiren(){
       if(sirenOsc){
-        try{ sirenOsc.stop(); sirenLfo.stop(); }catch(e){}
-        sirenOsc=null; sirenGain=null; sirenLfo=null;
+        try{ sirenOsc.stop(); sirenOsc2.stop(); sirenLfo.stop(); }catch(e){}
+        sirenOsc=null; sirenOsc2=null; sirenGain=null; sirenLfo=null;
       }
+      if(moanInterval){ clearInterval(moanInterval); moanInterval=null; }
     }
+
     function frightenedHum(active){
-      // swap siren for a faster, lower hum during frightened mode
+      // swap the creepy drone for a quicker, jittery tremolo while zombies flee —
+      // still unsettling, just higher and faster, like the threat is scrambling
       if(active){
         stopSiren();
         if(muted) return;
@@ -581,18 +721,56 @@
         if(!ac) return;
         sirenOsc = ac.createOscillator();
         sirenGain = ac.createGain();
+        sirenLfo = ac.createOscillator();
+        const lfoGain = ac.createGain();
         sirenOsc.type='triangle';
-        sirenOsc.frequency.value = 160;
+        sirenOsc.frequency.value = 180;
+        sirenLfo.type = 'square';
+        sirenLfo.frequency.value = 7;
+        lfoGain.gain.value = 0.012;
+        sirenLfo.connect(lfoGain);
+        lfoGain.connect(sirenGain.gain);
         sirenGain.gain.value = 0.02;
         sirenOsc.connect(sirenGain);
         sirenGain.connect(ac.destination);
         sirenOsc.start();
+        sirenLfo.start();
       } else {
         stopSiren();
       }
     }
 
+    // Adventurous ambient loop while Big Pikmin is active: a bright, bouncy
+    // major-key arpeggio sequencer for a heroic quest feeling.
+    let bigPikminLoopTimer = null;
+    function startBigPikminAmbient(){
+      if(muted || bigPikminLoopTimer) return;
+      const pattern = [392, 494, 587, 494]; // G major-ish bounce
+      let step = 0;
+      function playStep(){
+        if(muted) return;
+        const ac = ensureCtx();
+        if(!ac) return;
+        const t0 = ac.currentTime;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(pattern[step % pattern.length], t0);
+        gain.gain.setValueAtTime(0.045, t0);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.22);
+        osc.connect(gain); gain.connect(ac.destination);
+        osc.start(t0); osc.stop(t0+0.24);
+        step++;
+      }
+      playStep();
+      bigPikminLoopTimer = setInterval(playStep, 180);
+    }
+    function stopBigPikminAmbient(){
+      if(bigPikminLoopTimer){ clearInterval(bigPikminLoopTimer); bigPikminLoopTimer=null; }
+    }
+
     return { dot, powerPellet, ghostEaten, death, startJingle, win, startSiren, stopSiren, frightenedHum,
+      bigPikmin, bigPikminEnd, swordSlash, startBigPikminAmbient, stopBigPikminAmbient,
       get muted(){return muted;} };
   })();
 
@@ -633,38 +811,54 @@
     pacman.nextDir = dir;
   }
 
-  // D-pad buttons: respond to touchstart/mousedown for minimal latency, prevent default
-  // to avoid double-firing with click and to stop the page from scrolling/zooming.
-  function bindDirButton(id, dir){
-    const el = document.getElementById(id);
-    if(!el) return;
-    const press = (e)=>{
-      e.preventDefault();
-      setDir(dir);
-      el.classList.add('is-pressed');
-    };
-    const release = (e)=>{
-      el.classList.remove('is-pressed');
-    };
-    el.addEventListener('touchstart', press, {passive:false});
-    el.addEventListener('touchend', release);
-    el.addEventListener('touchcancel', release);
-    el.addEventListener('mousedown', press);
-    el.addEventListener('mouseup', release);
-    el.addEventListener('mouseleave', release);
-  }
-  bindDirButton('tbtn-up','up');
-  bindDirButton('tbtn-down','down');
-  bindDirButton('tbtn-left','left');
-  bindDirButton('tbtn-right','right');
+  const pauseBtn = document.getElementById('pauseBtn');
+  pauseBtn.addEventListener('click', ()=>{ if(gameRunning) togglePause(); });
+  pauseBtn.addEventListener('touchstart', e=>{ e.preventDefault(); if(gameRunning) togglePause(); }, {passive:false});
 
-  const centerBtn = document.getElementById('tbtn-center');
-  if(centerBtn){
-    centerBtn.addEventListener('touchstart', e=>{ e.preventDefault(); if(gameRunning) togglePause(); }, {passive:false});
-    centerBtn.addEventListener('click', ()=>{ if(gameRunning) togglePause(); });
-  }
+  const saveBtn = document.getElementById('saveBtn');
+  function saveScreenshot(){
+    // Composite the game canvas plus a title/score header onto an offscreen canvas,
+    // then trigger a download as a PNG. Works even mid-game since it just snapshots
+    // whatever is currently drawn.
+    const margin = 36;
+    const out = document.createElement('canvas');
+    out.width = canvas.width;
+    out.height = canvas.height + margin;
+    const octx = out.getContext('2d');
 
-  // swipe gestures directly on the canvas as an alternative to the D-pad
+    octx.fillStyle = '#000000';
+    octx.fillRect(0,0,out.width,margin);
+    octx.fillStyle = '#ffe600';
+    octx.font = 'bold 16px monospace';
+    octx.textAlign = 'left';
+    octx.fillText('PIKMIN VS ZOMBIES', 10, 22);
+    octx.fillStyle = '#ffd877';
+    octx.font = '13px monospace';
+    octx.textAlign = 'right';
+    octx.fillText(`Score: ${score}`, out.width-10, 22);
+    octx.drawImage(canvas, 0, margin);
+
+    out.toBlob(blob=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pikmin-vs-zombies-score-${score}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    });
+
+    saveBtn.classList.add('saved');
+    setTimeout(()=>saveBtn.classList.remove('saved'), 1200);
+  }
+  saveBtn.addEventListener('click', saveScreenshot);
+  saveBtn.addEventListener('touchstart', e=>{ e.preventDefault(); saveScreenshot(); }, {passive:false});
+
+  const swipeHint = document.getElementById('swipeHint');
+  let hasSwipedOnce = false;
+
+  // swipe gestures directly on the canvas — the only touch control scheme now
   (function setupSwipe(){
     let touchStartX=0, touchStartY=0, touchActive=false;
     const SWIPE_MIN = 18; // px threshold before a swipe registers (in CSS pixels)
@@ -689,6 +883,10 @@
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
       e.preventDefault();
+      if(!hasSwipedOnce){
+        hasSwipedOnce = true;
+        swipeHint.classList.remove('show');
+      }
     }, {passive:false});
 
     canvas.addEventListener('touchend', ()=>{ touchActive=false; });
@@ -702,10 +900,12 @@
       overlay.classList.add('show');
       startBtn.style.display='none';
       Sound.stopSiren();
+      Sound.stopBigPikminAmbient();
     } else {
       overlay.classList.remove('show');
       startBtn.style.display='';
-      if(frightTimer>0) Sound.frightenedHum(true);
+      if(bigPikminTimer>0) Sound.startBigPikminAmbient();
+      else if(frightTimer>0) Sound.frightenedHum(true);
       else Sound.startSiren();
       requestAnimationFrame(loop);
     }
@@ -714,11 +914,16 @@
   startBtn.addEventListener('click', ()=>{
     if(gameOverFlag || winFlag){
       fullReset();
+      hasSwipedOnce = false;
     }
     overlay.classList.remove('show');
     gameRunning = true;
     levelStartGuard = Math.max(levelStartGuard, 60);
     Sound.startJingle();
+    if(!hasSwipedOnce){
+      swipeHint.classList.add('show');
+      setTimeout(()=>{ swipeHint.classList.remove('show'); }, 4000);
+    }
     requestAnimationFrame(loop);
   });
 
@@ -806,6 +1011,19 @@
       winFlag = true;
       endGame(true);
     }
+
+    // pick up Big Pikmin green flower if standing on an active spot
+    const pickupCol = wrapCol(cellCol);
+    bigPikminSpots.forEach(spot=>{
+      if(spot.active && spot.col===pickupCol && spot.row===cellRow){
+        spot.active = false;
+        spot.cooldown = BIG_PIKMIN_RESPAWN_DELAY;
+        bigPikminTimer = BIG_PIKMIN_DURATION;
+        Sound.bigPikmin();
+        Sound.stopSiren();
+        Sound.startBigPikminAmbient();
+      }
+    });
   }
 
   // ---------- Ghost AI ----------
@@ -892,8 +1110,14 @@
 
   function checkCollisions(){
     ghosts.forEach(g=>{
-      if(collide(pacman,g,12)){
-        if(g.frightened && !g.eaten){
+      if(collide(pacman,g,14)){
+        if(bigPikminTimer>0 && !g.eaten){
+          // Big Pikmin's sword kills zombies outright, frightened or not
+          g.eaten=true;
+          g.frightened=false;
+          score += 150;
+          Sound.swordSlash();
+        } else if(g.frightened && !g.eaten){
           g.eaten=true;
           g.frightened=false;
           score += 200;
@@ -908,6 +1132,7 @@
 
   function loseLife(){
     Sound.stopSiren();
+    Sound.stopBigPikminAmbient();
     lives--;
     updateLivesDisplay();
     if(lives<=0){
@@ -919,11 +1144,12 @@
   }
 
   function resetPositions(){
-    const c = tileCenter(14,21);
+    const c = tileCenter(14,19);
     pacman.x=c.x; pacman.y=c.y; pacman.col=14; pacman.row=21;
     pacman.dir='left'; pacman.nextDir='left'; pacman.moving=false;
     resetGhosts();
     frightTimer=0;
+    bigPikminTimer=0;
   }
 
   function endGame(won){
@@ -931,6 +1157,7 @@
     gameOverFlag = !won;
     winFlag = won;
     Sound.stopSiren();
+    Sound.stopBigPikminAmbient();
     if(won) Sound.win();
     if(score>highScore){
       highScore=score;
@@ -951,6 +1178,9 @@
     scoreEl.textContent='0';
     updateLivesDisplay();
     resetPositions();
+    bigPikminTimer = 0;
+    bigPikminSpots.forEach(spot=>{ spot.active=true; spot.cooldown=0; });
+    bigPikminBanner.classList.remove('show');
     startBtn.textContent='START';
   }
 
@@ -968,13 +1198,24 @@
           ctx.lineWidth=1;
           ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
         } else if(v===2){
-          drawFlower(x+TILE/2, y+TILE/2, 2.6, getCss('--pellet'), getCss('--flower-center'));
+          drawFlower(x+TILE/2, y+TILE/2, 3.4, getCss('--pellet'), getCss('--flower-center'));
         } else if(v===3){
           const pulse = 1 + Math.sin(Date.now()/150)*0.18;
-          drawFlower(x+TILE/2, y+TILE/2, 5.5*pulse, getCss('--pellet'), getCss('--flower-center'));
+          drawFlower(x+TILE/2, y+TILE/2, 7*pulse, getCss('--pellet'), getCss('--flower-center'));
         }
       }
     }
+    // green flowers for the Big Pikmin power-up, drawn with a glow so they read as special
+    bigPikminSpots.forEach(spot=>{
+      if(!spot.active) return;
+      const cx = spot.col*TILE+TILE/2, cy = spot.row*TILE+OFFSET_Y+TILE/2;
+      const pulse = 1 + Math.sin(Date.now()/200)*0.22;
+      ctx.save();
+      ctx.shadowColor = getCss('--green-flower');
+      ctx.shadowBlur = 10;
+      drawFlower(cx, cy, 7.6*pulse, getCss('--green-flower'), getCss('--green-flower-center'));
+      ctx.restore();
+    });
   }
 
   // small 5-petal flower used for dots and (at larger scale) power pellets
@@ -1010,9 +1251,25 @@
     const leafSway = Math.sin(pacman.mouth*Math.PI) * 0.18;
     const facing = {right:1, left:-1, up:0, down:0}[dir];
     const flipY = dir === 'up';
+    const isBig = bigPikminTimer > 0;
+    const BASE_SCALE = 1.25; // overall sprite size bump for the more compact maze
+    const bigScale = (isBig ? 1.55 : 1) * BASE_SCALE;
 
     ctx.save();
     ctx.translate(pacman.x, pacman.y + bob*0.3);
+
+    if(isBig){
+      // glowing aura around the transformed Pikmin
+      const glowPulse = 1 + Math.sin(Date.now()/120)*0.15;
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = getCss('--green-flower');
+      ctx.beginPath();
+      ctx.arc(0, 0, 14*glowPulse*BASE_SCALE, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.scale(bigScale, bigScale);
 
     // little feet (only visible front-on or to the side, bob opposite the body)
     ctx.fillStyle = '#a8341f';
@@ -1085,12 +1342,46 @@
     ctx.fill();
     ctx.restore();
 
+    if(isBig){
+      // sword held out in the direction of travel (diagonal pose for up/down)
+      const swordAngle = {right:-0.55, left:Math.PI+0.55, up:-Math.PI/2-0.4, down:Math.PI/2+0.4}[dir];
+      ctx.save();
+      ctx.rotate(swordAngle);
+      ctx.translate(8, 0);
+      // hilt
+      ctx.strokeStyle = getCss('--sword-hilt');
+      ctx.lineWidth = 1.8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.lineTo(2.5,0);
+      ctx.stroke();
+      // crossguard
+      ctx.beginPath();
+      ctx.moveTo(2.5,-1.5);
+      ctx.lineTo(2.5,1.5);
+      ctx.stroke();
+      // blade
+      const bladeGrad = ctx.createLinearGradient(2.5,0,11,0);
+      bladeGrad.addColorStop(0, getCss('--sword-blade'));
+      bladeGrad.addColorStop(1, '#ffffff');
+      ctx.fillStyle = bladeGrad;
+      ctx.beginPath();
+      ctx.moveTo(2.5,-0.9);
+      ctx.lineTo(10.5,0);
+      ctx.lineTo(2.5,0.9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
     ctx.restore();
   }
 
   function drawZombie(g){
     ctx.save();
     ctx.translate(g.x,g.y);
+    ctx.scale(1.25, 1.25); // overall sprite size bump matching the more compact maze
 
     const t = Date.now()/220 + (g.col||0)*1.7; // per-zombie phase offset
     const shamble = Math.sin(t); // -1..1 shuffle cycle
@@ -1240,12 +1531,34 @@
           Sound.startSiren();
         }
       }
+      if(bigPikminTimer>0){
+        bigPikminTimer--;
+        if(bigPikminTimer===0){
+          Sound.bigPikminEnd();
+          Sound.stopBigPikminAmbient();
+          if(frightTimer>0) Sound.frightenedHum(true);
+          else Sound.startSiren();
+        }
+      }
+      bigPikminSpots.forEach(spot=>{
+        if(!spot.active && spot.cooldown>0){
+          spot.cooldown--;
+          if(spot.cooldown===0) spot.active = true;
+        }
+      });
     }
 
     drawMaze();
     ghosts.forEach(drawZombie);
     drawPikmin();
     scoreEl.textContent = score;
+
+    if(bigPikminTimer>0){
+      bigPikminBanner.classList.add('show');
+      bigPikminTimeEl.textContent = Math.ceil(bigPikminTimer/60);
+    } else {
+      bigPikminBanner.classList.remove('show');
+    }
 
     if(gameRunning) requestAnimationFrame(loop);
   }
